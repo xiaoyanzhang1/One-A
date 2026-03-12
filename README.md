@@ -15,6 +15,7 @@ This repository provides the official PyTorch implementation of **One-A** for st
 
 ```bash
 conda env create -f environment.yaml
+conda activate onea
 ```
 
 
@@ -37,10 +38,13 @@ We would like to thank the repository [PILOT: A Pre-Trained Model-Based Continua
 If you find this work useful for your research, please consider citing our paper:
 
 ```bibtex
-@article{onea2025,
-  title   = {One Adapter for All: Towards Unified Representation in Step-Imbalanced Class-Incremental Learning},
-  author  = {Zhang, Xiaoyan and He, Jiangpeng},
-  journal = {arXiv preprint arXiv:XXXX.XXXXX},
-  year    = {2025}
+@misc{zhang2026adapterallunifiedrepresentation,
+      title={One Adapter for All: Towards Unified Representation in Step-Imbalanced Class-Incremental Learning}, 
+      author={Xiaoyan Zhang and Jiangpeng He},
+      year={2026},
+      eprint={2603.10237},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2603.10237}, 
 }
 ```
