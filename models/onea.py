@@ -700,36 +700,30 @@ class Learner(BaseLearner):
             rho_head = getattr(self, "rb_rho_head", 0.1)
             rho_tail = getattr(self, "rb_rho_tail", 0.9)
 
-            if rb_mode == "hard":
-                # Original hard split: first r_head rows use rho_head, others rho_tail
-                r_head = int(max(1, min(r - 1, round(r_head_frac * r))))
-                mask_row = torch.empty(r, device=delta.device, dtype=delta.dtype)
-                mask_row[:r_head] = rho_head
-                mask_row[r_head:] = rho_tail
+            
+            # Smooth gating based on normalized singular values
+            S_norm = S / (S[0] + eps)
+
+            tau_mode = getattr(self, "rb_tau_mode", "quantile")
+            kappa = self.rb_kappa
+
+            if tau_mode == "quantile":
+                tau_q = self.rb_tau_q
+                tau = torch.quantile(
+                    S_norm, torch.tensor(tau_q, device=S_norm.device)
+                )
             else:
-                # Smooth gating based on normalized singular values
-                S_norm = S / (S[0] + eps)
+                tau = torch.tensor(
+                    getattr(self, "rb_tau", 0.5),
+                    device=S_norm.device,
+                    dtype=S_norm.dtype,
+                )
 
-                tau_mode = getattr(self, "rb_tau_mode", "quantile")
-                kappa = self.rb_kappa
+            mask_row = 1.0 / (1.0 + torch.exp(kappa * (S_norm - tau)))
 
-                if tau_mode == "quantile":
-                    tau_q = self.rb_tau_q
-                    tau = torch.quantile(
-                        S_norm, torch.tensor(tau_q, device=S_norm.device)
-                    )
-                else:
-                    tau = torch.tensor(
-                        getattr(self, "rb_tau", 0.5),
-                        device=S_norm.device,
-                        dtype=S_norm.dtype,
-                    )
-
-                mask_row = 1.0 / (1.0 + torch.exp(kappa * (S_norm - tau)))
-
-                if rb_mode == "hybrid":
-                    # Map (0,1) to [rho_head, rho_tail]
-                    mask_row = rho_head + (rho_tail - rho_head) * mask_row
+            if rb_mode == "hybrid":
+                # Map (0,1) to [rho_head, rho_tail]
+                mask_row = rho_head + (rho_tail - rho_head) * mask_row
 
             mask = mask_row.unsqueeze(1)
             Vh_m = Vh_dst + mask * delta
